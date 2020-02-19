@@ -1,0 +1,4 @@
+[   CONST a int 5;
+    CONST b int 10;
+    CONST res bool (gt a b)
+] 
