@@ -43,14 +43,23 @@ Cmd newASTStat(Expr e){
     return res;
 }
 
-Cmd newASTDec(char * id, Type t, Expr e){
+Cmd newASTCmdDec(Dec dec) {
     Cmd res = mallocCmd;
     res->tag = ASTDec;
-    res->content.dec.id = id;
-    res->content.dec.type = t;
-    res->content.dec.e = e;
+    res->content.dec = dec;
     return res;
 }
+
+Dec newASTDec(char * id, Type t, Args args, Expr e, TagDec tag){
+    Dec res = mallocDec;
+    res->tag = tag;
+    res->id = id;
+    res->type = t;
+    res->args = args;
+    res->e = e;
+    return res;
+}
+
 
 Cmds appendCmds(Cmd cmd, Cmds cmds) {
     Cmds res = mallocCmds;
@@ -59,5 +68,62 @@ Cmds appendCmds(Cmd cmd, Cmds cmds) {
     return res;
 }
 
+Type newASTType1(Tprim t){
+    Type res = mallocType;
+    res->flag = 1;
+    res->content.t = t;
+    return res;
+}
 
+Type newASTType2(Types t1, Type t2){
+    Type res = mallocType;
+    res->flag = 2;
+    res->content.t_func.types = t1;
+    res->content.t_func.type = t2;
+    return res;
+}
 
+Types appendTypes(Type t, Types ts){
+    Types res = mallocTypes;
+    res->head = t;
+    res->next = ts;
+    return res; 
+}
+
+Arg newASTArg(char * id, Type type){
+    Arg res = mallocArg;
+    res->ident = id;
+    res->type = type;
+    return res;
+}
+
+Args appendArgs(Arg arg, Args args){
+    Args res = mallocArgs;
+    res->arg = arg;
+    res->next = args;
+    return res;
+}
+
+Expr newASTIf(Expr cond, Expr prog, Expr alter) {
+    Expr res = mallocExpr;
+    res->tag = ASTIf;
+    res->content.If.condition = cond;
+    res->content.If.prog = prog;
+    res->content.If.alter = alter;
+    return res;
+}
+
+Expr newASTLambda(Args args, Expr e) {
+    Expr res = mallocExpr;
+    res->tag = ASTLambda;
+    res->content.lambda.args = args;
+    res->content.lambda.e = e;
+    return res;
+}
+
+Expr newASTBloc(Exprs es){
+    Expr res = mallocExpr;
+    res->tag = ASTBloc;
+    res->content.bloc = es;
+    return res;
+}

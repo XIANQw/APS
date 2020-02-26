@@ -5,9 +5,9 @@ YACC_C = yacc
 CC = gcc
 SRC = src
 EXC = exc
-BIN = bin
 CPPFLAGS= -I $(SRC)/include
 PARSER= $(SRC)/lexer/lex.yy.c $(SRC)/parser/y.tab.c
+TARGET = $(EXC)/prologTerm
 
 vpath %.o $(BIN)
 vpath %.c $(SRC)/ast
@@ -21,7 +21,6 @@ All: $(PARSER) $(EXC)/prologTerm
 
 obj := $(patsubst %.c,%.o,$(wildcard $(SRC)/ast/*.c))
 obj += $(patsubst %.c,%.o,$(wildcard $(SRC)/prog/*.c))
-
 
 $(EXC)/prologTerm: $(obj) $(SRC)/parser/y.tab.o $(SRC)/lexer/lex.yy.o
 	$(CC) -o $@ $^ -lm -ll
@@ -40,9 +39,19 @@ $(SRC)/lexer/lex.yy.c: $(SRC)/lexer/lexer.lex
 run: $(EXC)/prologTerm
 	./$(EXC)/prologTerm < in
 
+test:
+	@echo "=================fun=================" 
+	$(TARGET) < tests/test_fun
+	@echo "=================dec================="
+	$(TARGET) < tests/test_dec
+	@echo "=================stat================="
+	$(TARGET) < tests/test_stat
+	@echo "=================if================="
+	$(TARGET) < tests/test_if
+
 clean: 
 	rm $(SRC)/lexer/lex.yy.*;
 	rm $(SRC)/parser/y.tab.*;
 	rm $(SRC)/include/y.tab.*;
 	rm $(obj);
-	rm $(EXC)/prologTerm;
+	rm $(TARGET);

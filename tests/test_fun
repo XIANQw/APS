@@ -1,0 +1,5 @@
+[   
+    CONST a int 5;
+    CONST b int 5;
+    FUN foo (int * int -> int) [a:int, b:int] (sub a b)
+] 

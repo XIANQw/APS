@@ -1,4 +1,3 @@
-[   CONST a int 5;
-    CONST b int 10;
-    CONST res bool (gt a b)
-] 
+[   
+    CONST f int [a:int, b:int] ((add a b) (mul a b))
+]
