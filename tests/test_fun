@@ -1,5 +1,7 @@
 [   
-    CONST a int 5;
-    CONST b int 5;
-    FUN foo (int * int -> int) [a:int, b:int] (sub a b)
+    CONST a int 1;
+    CONST b int 2;
+    CONST c int 3;
+    FUN foo (int * int -> int) [a:int, b:int] (sub a b);
+    ECHO (foo 1 2)
 ] 

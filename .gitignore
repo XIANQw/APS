@@ -21,12 +21,18 @@
 *.a
 *.la
 *.lo
+ning
 
 # Shared objects (inc. Windows DLLs)
 *.dll
 *.so
 *.so.*
 *.dylib
+
+# Yacc lexer
+*.yy.c
+*.tab.c
+*.tab.h
 
 # Executables
 *.exe

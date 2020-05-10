@@ -2,15 +2,15 @@
 
 typedef enum{
     ASTNum, ASTId, ASTBool, ASTPrim, 
-    ASTBloc, ASTStat, ASTDec, ASTIf,
-    ASTLambda
+    ASTBprim, ASTRprim, ASTBloc, ASTStat, ASTDec, 
+    ASTIf, ASTLambda 
 }Tag;
 typedef enum{
     DEC_CONS, DEC_FUN, DEC_FUNREC
 }TagDec;
 
 typedef enum{
-    Eq, Lt, Gt, Add, Sub, Mul, Div, Or, And
+    Add, Sub, Mul, Div, Eq, Lt, Gt, Or, And
 }Oprim;
 
 typedef enum{
@@ -21,17 +21,17 @@ typedef enum{
     c_true, c_false
 }cbool;
 
-
+typedef struct _prog * Prog;
 typedef struct _exprs * Exprs;
 typedef struct _expr * Expr;
 typedef struct _dec * Dec;
 typedef struct _cmd * Cmd;
 typedef struct _cmds * Cmds;
-typedef struct _prog * Prog;
 typedef struct _type * Type;
 typedef struct _types * Types;
 typedef struct _arg * Arg;
 typedef struct _args * Args;
+
 
 struct _prog{
     Cmds content;
@@ -96,6 +96,7 @@ struct _expr{
             cbool val;
         }bool;
         struct{
+            Tag tag;
             Oprim op;
             Exprs opans;
         }prim;
@@ -117,11 +118,11 @@ struct _exprs{
     Exprs next;
 };
 
-
+Prog newASTProg(Cmds cmds);
 Expr newASTNum(int num);
 Expr newASTId(char * id);
 Expr newASTBool(cbool val);
-Expr newASTPrim(Oprim, Exprs es);
+Expr newASTPrim(Oprim op, Exprs es);
 Expr newASTIf(Expr cond, Expr res, Expr alter);
 Expr newASTLambda(Args args, Expr e);
 Expr newASTBloc(Exprs es);
@@ -136,6 +137,7 @@ Types appendTypes(Type type, Types tpyes);
 Arg newASTArg(char * id, Type type);
 Args appendArgs(Arg arg, Args args);
 
+#define mallocProg (Prog)malloc(sizeof(struct _prog))
 #define mallocExpr (Expr)malloc(sizeof(struct _expr))
 #define mallocExprs (Exprs)malloc(sizeof(struct _exprs))
 #define mallocCmd (Cmd)malloc(sizeof(struct _cmd))

@@ -9,17 +9,17 @@ void printOp(Oprim op){
         case Mul: printf("mul"); break;
         case Or: printf("or"); break;
         case And: printf("and"); break;        
-        case Eq: printf("equals"); break;
+        case Eq: printf("eq"); break;
         case Lt: printf("less"); break;
-        case Gt: printf("greater"); break;        
+        case Gt: printf("gt"); break;        
     }
 }
 
 void printNum(int n){
-    printf("num(%d)", n);
+    printf("%d", n);
 }
 void printId(char * id){
-    printf("var(%s)", id);
+    printf("%s", id);
 }
 
 void printBool(cbool val) {
@@ -31,33 +31,33 @@ void printBool(cbool val) {
 
 void printPrim(Expr e){
     printOp(e->content.prim.op);
-    printf("([");
+    printf("(");
     printExprs(e->content.prim.opans);
-    printf("])");
+    printf(")");
 }
 
 void printIf(Expr e){
-    printf("if (");
+    printf("if(");
     printExpr(e->content.If.condition);
-    printf(") then {\n");
+    printf(",");
     printExpr(e->content.If.prog);
-    printf("\n}else {\n");
+    printf(",");
     printExpr(e->content.If.alter);
-    printf("\n}");
+    printf(")");
 }
 
 void printLambda(Expr e){
-    printf("lambda: ");
+    printf("lambda(");
     printArgs(e->content.lambda.args);
-    printf("{\n");
+    printf(",");
     printExpr(e->content.lambda.e);
-    printf("\n}");
+    printf(")");
 }
 
 void printBloc(Expr e) {
-    printf("{\n");
+    printf("astExprs(");
     printExprs(e->content.bloc);
-    printf("\n}");
+    printf(")");
 }
 
 void printExpr(Expr e){
@@ -94,7 +94,7 @@ void printType(Type t){
         case 2:{
             printf("(");
             printTypes(t->content.t_func.types);
-            printf(" -> ");
+            printf("->");
             printType(t->content.t_func.type);
             printf(")");
             break;
@@ -106,7 +106,7 @@ void printTypes(Types ts){
     if(!ts) return ;
     while(ts->next){
         printType(ts->head);
-        printf(" * ");
+        printf("*");
         ts = ts->next;
     }
     printType(ts->head);
@@ -115,39 +115,43 @@ void printTypes(Types ts){
 void printDec(Dec dec){
     switch (dec->tag) {
         case DEC_CONS:
-            printf("const ");
+            printf("const(");
             printId(dec->id);
-            printf(": ");
+            printf(",");
             printType(dec->type);
-            printf(" = ");
+            printf(",");
             printExpr(dec->e);
+            printf(")");
             break;
         case DEC_FUN: 
-            printf("fun "); 
-            printId(dec->id);
-            printArgs(dec->args);
-            printType(dec->type);
-            printf("{\n");
+            printf("fun("); 
+            printId(dec->id);printf(",");
+            printType(dec->type);printf(",");
+            printArgs(dec->args);printf(",");
             printExpr(dec->e);
-            printf("\n};");
+            printf(")");
             break;
         case DEC_FUNREC : 
-            printf("fun rec "); 
+            printf("funrec("); 
             printId(dec->id);
-            printArgs(dec->args);
+            printf(",");
             printType(dec->type);
-            printf("{\n");
+            printf(",");
+            printArgs(dec->args);
+            printf(",");
             printExpr(dec->e);
-            printf("\n}");
+            printf(")");
             break;
     }
 }
 
 void printArg(Arg arg) {
     if(!arg) return;
+    printf("(");
     printId(arg->ident);
-    printf(": ");
+    printf(":");
     printType(arg->type);
+    printf(")");
 }
 
 void printArgs(Args args){
@@ -155,7 +159,7 @@ void printArgs(Args args){
     printf("[");
     while(args->next){
         printArg(args->arg);
-        printf(", ");
+        printf(",");
         args = args->next;
     }
     printArg(args->arg);
@@ -165,8 +169,9 @@ void printArgs(Args args){
 void printCmd(Cmd cmd) {
     switch(cmd->tag) {
         case ASTStat : 
-        printf("Echo: ");
+        printf("echo(");
         printExpr(cmd->content.stat.content); 
+        printf(")");
         break;
         case ASTDec : printDec(cmd->content.dec); break;
     }
@@ -176,10 +181,15 @@ void printCmds(Cmds cmds){
     if(!cmds) return ;
     while(cmds->next){
         printCmd(cmds->head);
-        printf(";\n");
+        printf(";");
         cmds = cmds->next;
     }
     printCmd(cmds->head);
 }
 
 
+void printProg(Prog prog){
+    printf("program([");
+    printCmds(prog->content);
+    printf("]).");
+}

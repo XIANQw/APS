@@ -1,3 +1,3 @@
 [
-    echo (if (gt 1 1) (add 1 1) (sub 2 1))
+    ECHO (if (gt 1 1) 42 43)
 ]

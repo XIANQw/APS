@@ -28,6 +28,7 @@ idents [a-zA-Z][a-zA-Z0-9]*
 "REC" return(REC);
 
 "echo" return(ECHO);
+"ECHO" return(ECHO);
 
 "bool" return(BOOL);
 "int" return(INT);

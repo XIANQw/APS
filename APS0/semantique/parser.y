@@ -1,11 +1,11 @@
 %{
     #include <stdio.h>
     #include <stdlib.h>
-    #include "prologTerm.h"
+    #include "eval.h"
 
     int yylex (void);
     int yyerror (char *);
-    Cmds theProg;
+    Prog theProg;
 %}
 
 %token<num>  NUM
@@ -41,9 +41,10 @@
     Oprim oprim;
     Arg arg;
     Args args;
+    Prog prog;
 }
 
-%type<cmds> prog
+%type<prog> prog
 %type<cmd> stat
 %type<dec> dec
 %type<cmd> cmd
@@ -63,7 +64,7 @@
 %%
 
 prog:
-LCO cmds RCO {theProg = $2; }
+LCO cmds RCO {theProg = newASTProg($2); }
 ;
 
 cmd:
@@ -155,7 +156,6 @@ int yyerror(char *s) {
 
 int main(int argc, char **argv) {
     yyparse();
-    printCmds(theProg);
-    printf("\n");
+    evalProg(theProg);
     return 0;
 }

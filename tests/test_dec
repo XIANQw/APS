@@ -1,3 +1,5 @@
 [
-    CONST a int 5
+    CONST a int 1;
+    CONST b int 2;
+    ECHO (mul a b)
 ]

@@ -11,3 +11,4 @@ void printType(Type type);
 void printTypes(Types tpyes);
 void printArgs(Args args);
 void printArg(Arg arg);
+void printProg(Prog prog);

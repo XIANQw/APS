@@ -1,5 +1,12 @@
 #include "ast.h"
 
+Prog newASTProg(Cmds cmds){
+    Prog res = mallocProg;
+    res->content =cmds;
+    return res;
+}
+
+
 Expr newASTNum(int num){
     Expr res = mallocExpr;
     res->tag = ASTNum;
@@ -24,6 +31,9 @@ Expr newASTBool(cbool val){
 Expr newASTPrim(Oprim op, Exprs es){
     Expr res = mallocExpr;
     res->tag = ASTPrim;
+    if(op < 4) res->content.prim.tag = ASTPrim;
+    else if(op < 7) res->content.prim.tag = ASTBprim;
+    else res->content.prim.tag = ASTRprim;
     res->content.prim.op = op;
     res->content.prim.opans = es;
     return res;
