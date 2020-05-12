@@ -10,7 +10,7 @@ void printOp(Oprim op){
         case Or: printf("or"); break;
         case And: printf("and"); break;        
         case Eq: printf("eq"); break;
-        case Lt: printf("less"); break;
+        case Lt: printf("lt"); break;
         case Gt: printf("gt"); break;        
     }
 }
@@ -55,8 +55,11 @@ void printLambda(Expr e){
 }
 
 void printBloc(Expr e) {
-    printf("astExprs(");
-    printExprs(e->content.bloc);
+    printf("appFunc(");
+    printExpr(e->content.bloc->head);
+    printf(",[");
+    printExprs(e->content.bloc->next);
+    printf("]");
     printf(")");
 }
 
@@ -74,12 +77,12 @@ void printExpr(Expr e){
 
 void printExprs(Exprs es){
     if(!es) return ;
-    while(es->next){
-        printExpr(es->head);
-        printf(",");
-        es = es->next;
-    }
     printExpr(es->head);
+    while(es->next){
+        es = es->next;
+        printf(",");
+        printExpr(es->head);
+    }
 }
 
 void printType(Type t){
@@ -92,9 +95,9 @@ void printType(Type t){
             break;
         }
         case 2:{
-            printf("(");
+            printf("typeFunc([");
             printTypes(t->content.t_func.types);
-            printf("->");
+            printf("],");
             printType(t->content.t_func.type);
             printf(")");
             break;
@@ -132,7 +135,7 @@ void printDec(Dec dec){
             printf(")");
             break;
         case DEC_FUNREC : 
-            printf("funrec("); 
+            printf("funRec("); 
             printId(dec->id);
             printf(",");
             printType(dec->type);
@@ -149,7 +152,7 @@ void printArg(Arg arg) {
     if(!arg) return;
     printf("(");
     printId(arg->ident);
-    printf(":");
+    printf(",");
     printType(arg->type);
     printf(")");
 }
@@ -181,7 +184,7 @@ void printCmds(Cmds cmds){
     if(!cmds) return ;
     while(cmds->next){
         printCmd(cmds->head);
-        printf(";");
+        printf(",");
         cmds = cmds->next;
     }
     printCmd(cmds->head);
