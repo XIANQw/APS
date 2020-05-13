@@ -1,6 +1,6 @@
 # !/bin/zsh
 
-target="../aps0"
+target="../aps1"
 toProg="../syntaxe/prologTermProg"
 
 for i in $(ls $target/*.*)

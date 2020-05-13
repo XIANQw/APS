@@ -76,7 +76,20 @@ Stat newASTStatIf(Expr cond, Prog block, Prog alter){
     res->content._if.res=block->content;
     res->content._if.alter=alter->content;
     return res;
-
+}
+Stat newASTStatWhile(Expr cond, Prog block){
+    Stat res = mallocStat;
+    res->tag = STAT_WHILE;
+    res->content._while.cond=cond;
+    res->content._while.block=block->content;
+    return res;
+}
+Stat newASTStatCall(char *id, Exprs es){
+    Stat res=mallocStat;
+    res->tag=STAT_CALL;
+    res->content._call.id=id;
+    res->content._call.es=es;
+    return res;
 }
 
 Dec newASTDec(char * id, Type t, Args args, Expr e, Prog prog, TagDec tag){

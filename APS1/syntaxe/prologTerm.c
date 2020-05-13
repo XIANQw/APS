@@ -11,7 +11,8 @@ void printOp(Oprim op){
         case And: printf("and"); break;        
         case Eq: printf("eq"); break;
         case Lt: printf("lt"); break;
-        case Gt: printf("gt"); break;        
+        case Gt: printf("gt"); break;  
+        case Not: printf("not"); break;      
     }
 }
 
@@ -131,6 +132,16 @@ void printStat(Stat stat){
         printExpr(stat->content._if.cond); printf(",");
         printCmds(stat->content._if.res); printf(",");
         printCmds(stat->content._if.alter); printf(")");
+        break;
+    case STAT_WHILE:
+        printf("while(");
+        printExpr(stat->content._while.cond); printf(",");
+        printCmds(stat->content._while.block); printf(")");
+        break;
+    case STAT_CALL:
+        printf("call(");
+        printId(stat->content._call.id); printf(",");
+        printExprs(stat->content._call.es); printf(")");
         break;
     default:
         break;

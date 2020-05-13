@@ -89,6 +89,8 @@ stat:
 ECHO expr { $$ = newASTStatEcho($2);}
 |SET IDENT expr {$$ = newASTStatSet($2, $3);}
 |IF expr block block {$$ = newASTStatIf($2, $3, $4);}
+|WHILE expr block {$$ = newASTStatWhile($2, $3); }
+|CALL IDENT exprs {$$ = newASTStatCall($2, $3); }
 ;
 
 // newASTDec(char * id, Type t, Args args, Expr e, Prog prog, TagDec tag);
@@ -147,6 +149,7 @@ PLUS {$$ = Add; }
 | EQ {$$ = Eq; }
 | LT {$$ = Lt; }
 | GT {$$ = Gt; }
+| NOT {$$ = Not; }
 ;
 
 expr:

@@ -6,14 +6,14 @@ typedef enum{
     DEC_CONS, DEC_FUN, DEC_FUNREC, DEC_VAR, DEC_PROC, DEC_PROCREC
 }TagDec;
 typedef enum{
-    STAT_ECHO, STAT_SET, STAT_IF 
+    STAT_ECHO, STAT_SET, STAT_IF, STAT_WHILE, STAT_CALL
 }TagStat;
 typedef enum{
     ASTNum, ASTId, ASTBool, ASTPrim, 
     ASTBloc, ASTIf, ASTLambda
 }TagExpr;
 typedef enum{
-    Add, Sub, Mul, Div, Eq, Lt, Gt, Or, And
+    Add, Sub, Mul, Div, Eq, Lt, Gt, Or, And, Not
 }Oprim;
 
 typedef enum{
@@ -167,6 +167,8 @@ Cmd newASTCmd(Stat stat, Dec dec, TagCmd tag);
 Stat newASTStatEcho(Expr e);
 Stat newASTStatSet(char *id, Expr e);
 Stat newASTStatIf(Expr cond, Prog prog, Prog alter);
+Stat newASTStatWhile(Expr cond, Prog block);
+Stat newASTStatCall(char *id, Exprs es);
 // Dec
 Dec newASTDec(char * id, Type t, Args args, Expr e, Prog block, TagDec tag);
 // Types
