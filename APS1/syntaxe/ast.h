@@ -1,16 +1,17 @@
 #include <stdlib.h>
-
 typedef enum{
-    ASTNum, ASTId, ASTBool, ASTPrim, 
-    ASTBprim, ASTRprim, ASTBloc, ASTStat, ASTDec, 
-    ASTIf, ASTLambda
-}Tag;
+    CMD_DEC, CMD_STAT
+}TagCmd;
 typedef enum{
     DEC_CONS, DEC_FUN, DEC_FUNREC, DEC_VAR, DEC_PROC, DEC_PROCREC
 }TagDec;
 typedef enum{
-    STAT_ECHO, STAT_SET 
+    STAT_ECHO, STAT_SET, STAT_IF 
 }TagStat;
+typedef enum{
+    ASTNum, ASTId, ASTBool, ASTPrim, 
+    ASTBloc, ASTIf, ASTLambda
+}TagExpr;
 typedef enum{
     Add, Sub, Mul, Div, Eq, Lt, Gt, Or, And
 }Oprim;
@@ -43,11 +44,23 @@ struct _prog{
 struct _dec{
     TagDec tag;
     char *id;
-    Type type;
-    Args args;
     union{ 
-        Cmds cmds;   
-        Expr e;
+        struct{
+            Type type;
+            Expr e;
+        }_const;
+        struct{
+            Type type;
+        }_var;
+        struct {
+            Type type;
+            Args args;
+            Expr e;
+        }_fun;
+        struct{
+            Args args;
+            Cmds cmds;
+        }_proc;
     }content;
 };
 
@@ -58,13 +71,26 @@ struct  _stat{
         struct{
             char *id;
             Expr e;
-        }set;
+        }_set;
+        struct{
+            Expr cond;
+            Cmds res;
+            Cmds alter;
+        }_if;
+        struct{
+            Expr cond;
+            Cmds block;
+        }_while;
+        struct{
+            char *id;
+            Exprs es;
+        }_call;
     }content;  
 };
 
 
 struct _cmd{
-    Tag tag;
+    TagCmd tag;
     union{
         Dec dec;
         Stat stat;
@@ -103,15 +129,14 @@ struct _args {
 };
 
 struct _expr{
-    Tag tag;
+    TagExpr tag;
     union{
         int num;
         char *id;
         struct{
             cbool val;
-        }bool;
+        }cbool;
         struct{
-            Tag tag;
             Oprim op;
             Exprs opans;
         }prim;
@@ -124,7 +149,7 @@ struct _expr{
             Args args;
             Expr e;
         }lambda;
-        Exprs bloc;
+        Exprs es;
     }content;
 };
 
@@ -137,14 +162,13 @@ struct _exprs{
 Prog newASTProg(Cmds cmds);
 // Cmds
 Cmds appendCmds(Cmd cmd, Cmds cmds);
-Cmd newASTCmdStat(Stat stat);
-Cmd newASTCmdDec(Dec dec);
+Cmd newASTCmd(Stat stat, Dec dec, TagCmd tag);
 // Stat
-Stat newASTEcho(Expr e);
-Stat newASTSet(char *id, Expr e);
+Stat newASTStatEcho(Expr e);
+Stat newASTStatSet(char *id, Expr e);
+Stat newASTStatIf(Expr cond, Prog prog, Prog alter);
 // Dec
-Dec newASTDec(char * id, Type t, Args args, Expr e, TagDec tag);
-Dec newASTDecProc(char * id, Args args, Prog prog, TagDec tag);
+Dec newASTDec(char * id, Type t, Args args, Expr e, Prog block, TagDec tag);
 // Types
 Type newASTType1(Tprim t);
 Type newASTType2(Types types, Type type);

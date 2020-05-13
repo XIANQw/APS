@@ -54,11 +54,11 @@ void printLambda(Expr e){
     printf(")");
 }
 
-void printBloc(Expr e) {
+void printEs(Expr e) {
     printf("appFunc(");
-    printExpr(e->content.bloc->head);
+    printExpr(e->content.es->head);
     printf(",[");
-    printExprs(e->content.bloc->next);
+    printExprs(e->content.es->next);
     printf("]");
     printf(")");
 }
@@ -67,11 +67,11 @@ void printExpr(Expr e){
     switch(e->tag) {
         case ASTNum : printNum(e->content.num); break;
         case ASTId : printId(e->content.id); break;
-        case ASTBool : printBool(e->content.bool.val); break;
+        case ASTBool : printBool(e->content.cbool.val); break;
         case ASTPrim : printPrim(e); break;
         case ASTIf: printIf(e); break;
         case ASTLambda: printLambda(e); break;
-        case ASTBloc: printBloc(e); break;
+        case ASTBloc: printEs(e); break;
     }
 }
 
@@ -123,8 +123,14 @@ void printStat(Stat stat){
         break;
     case STAT_SET:
         printf("set(");
-        printId(stat->content.set.id); printf(",");
-        printExpr(stat->content.set.e); printf(")");
+        printId(stat->content._set.id); printf(",");
+        printExpr(stat->content._set.e); printf(")");
+        break;
+    case STAT_IF:
+        printf("if(");
+        printExpr(stat->content._if.cond); printf(",");
+        printCmds(stat->content._if.res); printf(",");
+        printCmds(stat->content._if.alter); printf(")");
         break;
     default:
         break;
@@ -137,39 +143,39 @@ void printDec(Dec dec){
         case DEC_CONS:
             printf("const(");
             printId(dec->id); printf(",");
-            printType(dec->type); printf(",");
-            printExpr(dec->content.e); printf(")");
+            printType(dec->content._const.type); printf(",");
+            printExpr(dec->content._const.e); printf(")");
             break;
         case DEC_FUN: 
             printf("fun("); 
             printId(dec->id);printf(",");
-            printType(dec->type);printf(",");
-            printArgs(dec->args);printf(",");
-            printExpr(dec->content.e); printf(")");
+            printType(dec->content._fun.type);printf(",");
+            printArgs(dec->content._fun.args);printf(",");
+            printExpr(dec->content._fun.e); printf(")");
             break;
         case DEC_FUNREC : 
             printf("funRec("); 
-            printId(dec->id); printf(",");
-            printType(dec->type); printf(",");
-            printArgs(dec->args); printf(",");
-            printExpr(dec->content.e); printf(")");
+            printId(dec->id);printf(",");
+            printType(dec->content._fun.type);printf(",");
+            printArgs(dec->content._fun.args);printf(",");
+            printExpr(dec->content._fun.e); printf(")");
             break;
         case DEC_VAR:
             printf("var(");
             printId(dec->id); printf(",");
-            printType(dec->type); printf(")");
+            printType(dec->content._var.type); printf(")");
             break;
         case DEC_PROC:
             printf("proc(");
             printId(dec->id); printf(",");
-            printArgs(dec->args); printf(",");
-            printCmds(dec->content.cmds); printf(")");
+            printArgs(dec->content._proc.args); printf(",");
+            printCmds(dec->content._proc.cmds); printf(")");
             break;
         case DEC_PROCREC:
             printf("procRec(");
             printId(dec->id); printf(",");
-            printArgs(dec->args); printf(",");
-            printCmds(dec->content.cmds); printf(")");
+            printArgs(dec->content._proc.args); printf(",");
+            printCmds(dec->content._proc.cmds); printf(")");
             break;
     }
 }
@@ -197,8 +203,8 @@ void printArgs(Args args){
 
 void printCmd(Cmd cmd) {
     switch(cmd->tag) {
-        case ASTStat: printStat(cmd->content.stat); break;
-        case ASTDec : printDec(cmd->content.dec); break;
+        case CMD_STAT: printStat(cmd->content.stat); break;
+        case CMD_DEC : printDec(cmd->content.dec); break;
     }
 }
 

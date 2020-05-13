@@ -48,6 +48,7 @@
 }
 
 %type<prog> prog
+%type<prog> block;
 %type<stat> stat
 %type<dec> dec
 %type<cmd> cmd
@@ -70,9 +71,13 @@ prog:
 LCO cmds RCO {theProg = newASTProg($2); }
 ;
 
+block:
+LCO cmds RCO {$$ = newASTProg($2);}
+;
+
 cmd:
-stat {$$ = newASTCmdStat($1);}
-| dec {$$ = newASTCmdDec($1); }
+stat {$$ = newASTCmd($1, NULL, CMD_STAT);}
+| dec {$$ = newASTCmd(NULL, $1, CMD_DEC); }
 ;
 
 cmds:
@@ -81,23 +86,25 @@ cmd {$$ = appendCmds($1, NULL); }
 ;
 
 stat:
-ECHO expr { $$ = newASTEcho($2);}
-|SET IDENT expr {$$ = newASTSet($2, $3);}
+ECHO expr { $$ = newASTStatEcho($2);}
+|SET IDENT expr {$$ = newASTStatSet($2, $3);}
+|IF expr block block {$$ = newASTStatIf($2, $3, $4);}
 ;
 
+// newASTDec(char * id, Type t, Args args, Expr e, Prog prog, TagDec tag);
 dec:
 CONST IDENT type expr 
-{$$ = newASTDec($2, $3, NULL, $4, DEC_CONS); }
+{$$ = newASTDec($2, $3, NULL, $4, NULL, DEC_CONS); }
 |FUN IDENT type LCO args RCO expr 
-{$$ = newASTDec($2, $3, $5, $7, DEC_FUN);}
+{$$ = newASTDec($2, $3, $5, $7, NULL, DEC_FUN);}
 |FUN REC IDENT type LCO args RCO expr 
-{$$ = newASTDec($3, $4, $6, $8, DEC_FUNREC);}
+{$$ = newASTDec($3, $4, $6, $8, NULL, DEC_FUNREC);}
 |VAR IDENT type 
-{$$ = newASTDec($2, $3, NULL, NULL, DEC_VAR);}
-|PROC IDENT LCO args RCO prog 
-{$$ = newASTDecProc($2, $4, $6, DEC_PROC);}
-|PROC REC IDENT LCO args RCO prog
-{$$ = newASTDecProc($3, $5, $7, DEC_PROCREC);}
+{$$ = newASTDec($2, $3, NULL, NULL, NULL, DEC_VAR);}
+|PROC IDENT LCO args RCO block 
+{$$ = newASTDec($2, NULL, $4, NULL, $6, DEC_PROC);}
+|PROC REC IDENT LCO args RCO block
+{$$ = newASTDec($3, NULL, $5, NULL, $7, DEC_PROCREC);}
 ;
 
 bool:

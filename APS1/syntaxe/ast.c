@@ -1,4 +1,6 @@
+#include <stdio.h>
 #include "ast.h"
+
 
 Prog newASTProg(Cmds cmds){
     Prog res = mallocProg;
@@ -24,16 +26,13 @@ Expr newASTId(char * id){
 Expr newASTBool(cbool val){
     Expr res = mallocExpr;
     res->tag = ASTBool;
-    res->content.bool.val = val;
+    res->content.cbool.val = val;
     return res;
 }
 
 Expr newASTPrim(Oprim op, Exprs es){
     Expr res = mallocExpr;
     res->tag = ASTPrim;
-    if(op < 4) res->content.prim.tag = ASTPrim;
-    else if(op < 7) res->content.prim.tag = ASTBprim;
-    else res->content.prim.tag = ASTRprim;
     res->content.prim.op = op;
     res->content.prim.opans = es;
     return res;
@@ -46,52 +45,60 @@ Exprs appendExprs(Expr e, Exprs es){
     return res;
 }
 
-Cmd newASTCmdStat(Stat stat){
+Cmd newASTCmd(Stat stat, Dec dec, TagCmd tag) {
     Cmd res = mallocCmd;
-    res->tag = ASTStat;
-    res->content.stat= stat;
+    res->tag = tag;
+    if(tag==CMD_DEC) res->content.dec = dec;
+    else if(tag==CMD_STAT) res->content.stat =stat;
+    else{
+        printf("Tag undifined\n"); exit(0);
+    }
     return res;
 }
 
-Stat newASTEcho(Expr e){
+Stat newASTStatEcho(Expr e){
     Stat res = mallocStat;
     res->tag = STAT_ECHO;
     res->content.e = e;
     return res;
 }
-Stat newASTSet(char *id, Expr e){
+Stat newASTStatSet(char *id, Expr e){
     Stat res = mallocStat;
     res->tag = STAT_SET;
-    res->content.set.id = id;
-    res->content.set.e = e;
+    res->content._set.id = id;
+    res->content._set.e = e;
+    return res;
+}
+Stat newASTStatIf(Expr cond, Prog block, Prog alter){
+    Stat res = mallocStat;
+    res->tag = STAT_IF;
+    res->content._if.cond=cond;
+    res->content._if.res=block->content;
+    res->content._if.alter=alter->content;
+    return res;
+
+}
+
+Dec newASTDec(char * id, Type t, Args args, Expr e, Prog prog, TagDec tag){
+    Dec res=mallocDec;
+    res->id=id;
+    res->tag=tag;
+    if(tag==DEC_CONS){
+        res->content._const.type=t;
+        res->content._const.e=e;
+    }else if(tag==DEC_FUN||tag==DEC_FUNREC){
+        res->content._fun.args=args;
+        res->content._fun.type=t;
+        res->content._fun.e=e;
+    }else if(tag==DEC_VAR){
+        res->content._var.type=t;
+    }else if(tag==DEC_PROC || tag==DEC_PROCREC){
+        res->content._proc.args=args;
+        res->content._proc.cmds=prog->content;
+    }
     return res;
 }
 
-Cmd newASTCmdDec(Dec dec) {
-    Cmd res = mallocCmd;
-    res->tag = ASTDec;
-    res->content.dec = dec;
-    return res;
-}
-
-Dec newASTDec(char * id, Type t, Args args, Expr e, TagDec tag){
-    Dec res = mallocDec;
-    res->tag = tag;
-    res->id = id;
-    res->type = t;
-    res->args = args;
-    res->content.e = e;
-    return res;
-}
-
-Dec newASTDecProc(char * id, Args args, Prog prog, TagDec tag){
-    Dec res = mallocDec;
-    res->tag = tag;
-    res->id = id;
-    res->args = args;
-    res->content.cmds = prog->content;
-    return res;
-}
 
 Cmds appendCmds(Cmd cmd, Cmds cmds) {
     Cmds res = mallocCmds;
@@ -156,6 +163,6 @@ Expr newASTLambda(Args args, Expr e) {
 Expr newASTBloc(Exprs es){
     Expr res = mallocExpr;
     res->tag = ASTBloc;
-    res->content.bloc = es;
+    res->content.es = es;
     return res;
 }

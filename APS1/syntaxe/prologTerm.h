@@ -3,7 +3,7 @@
 void printPrim(Expr e);
 void printIf(Expr e);
 void printLambda(Expr e);
-void printBloc(Expr e);
+void printEs(Expr e);
 void printExpr(Expr e);
 void printExprs(Exprs es);
 void printCmds(Cmds cmds);
