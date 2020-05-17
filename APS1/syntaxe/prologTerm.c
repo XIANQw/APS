@@ -96,7 +96,7 @@ void printType(Type t){
             break;
         }
         case 2:{
-            printf("typeFunc([");
+            printf("func([");
             printTypes(t->content.t_func.types);
             printf("],");
             printType(t->content.t_func.type);
@@ -128,7 +128,7 @@ void printStat(Stat stat){
         printExpr(stat->content._set.e); printf(")");
         break;
     case STAT_IF:
-        printf("if(");
+        printf("ifstat(");
         printExpr(stat->content._if.cond); printf(",");
         printCmds(stat->content._if.res); printf(",");
         printCmds(stat->content._if.alter); printf(")");
@@ -140,8 +140,8 @@ void printStat(Stat stat){
         break;
     case STAT_CALL:
         printf("call(");
-        printId(stat->content._call.id); printf(",");
-        printExprs(stat->content._call.es); printf(")");
+        printId(stat->content._call.id); printf(",[");
+        printExprs(stat->content._call.es); printf("])");
         break;
     default:
         break;
@@ -220,18 +220,23 @@ void printCmd(Cmd cmd) {
 }
 
 void printCmds(Cmds cmds){
-    if(!cmds) return ;
+    printf("[");
+    if(!cmds) {    
+        printf("]");
+        return ;
+    }
     while(cmds->next){
         printCmd(cmds->head);
         printf(",");
         cmds = cmds->next;
     }
     printCmd(cmds->head);
+    printf("]");
 }
 
 
 void printProg(Prog prog){
-    printf("program([");
+    printf("program(");
     printCmds(prog->content);
-    printf("]).");
+    printf(").");
 }

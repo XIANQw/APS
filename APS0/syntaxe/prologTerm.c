@@ -95,7 +95,7 @@ void printType(Type t){
             break;
         }
         case 2:{
-            printf("typeFunc([");
+            printf("func([");
             printTypes(t->content.t_func.types);
             printf("],");
             printType(t->content.t_func.type);

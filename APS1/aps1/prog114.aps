@@ -3,5 +3,5 @@
     [
       IF b [ ECHO 1 ] [ ECHO 0 ]
     ];
-  CALL printBool (lt false true)
+  CALL printBool (lt 0 1)
 ]

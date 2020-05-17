@@ -8,6 +8,6 @@ do
     filename=$(basename $i)
     echo $filename;
     ./$toProg < $i;
-    ./$toProg < $i | swipl -s hello.pl -g main_stdin    
+    ./$toProg < $i | swipl -s typage.pl -g main_stdin    
     echo "";
 done
