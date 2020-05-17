@@ -10,6 +10,15 @@ Env new_env(){
     return env;
 }
 
+Env copy_env(Env env){
+    Env copy = (Env)malloc(sizeof(struct  _env));
+    copy->cap=env->cap;
+    copy->size=env->size;
+    memcpy(copy->idents, env->idents, copy->size);
+    memcpy(copy->vals, env->vals, copy->size);
+    return copy;
+}
+
 void print_env(Env env){
     printf("env={");
     for(int i=0; i<env->size; i++){
@@ -19,6 +28,7 @@ void print_env(Env env){
     }
     printf("}\n");
 }
+
 
 void add_env(Env env, char *ident, Value v){
     if(env->size == env->cap){
@@ -181,7 +191,7 @@ Value evalExpr(Expr e, Env env) {
         }
         return res;
     case ASTBool:
-        if(e->content.bool.val==c_true) return new_num(1);
+        if(e->content.cbool.val==c_true) return new_num(1);
         return new_num(0);
     case ASTPrim : return evalBinOp(e->content.prim.op, e->content.prim.opans, env);
     case ASTIf:
@@ -189,17 +199,17 @@ Value evalExpr(Expr e, Env env) {
         if(get_num(cond)) return evalExpr(e->content.If.prog, env);
         return evalExpr(e->content.If.alter, env);
     case ASTBloc:
-        fun = evalExpr(e->content.bloc->head, env);
+        fun = evalExpr(e->content.es->head, env);
         size = env->size;
         if(fun->tag==V_FUN){
-            get_fun_args(e->content.bloc->next, fun->content.fun, env);
+            get_fun_args(e->content.es->next, fun->content.fun, env);
             // print_env(env);
             res = evalExpr(fun->content.fun->body, env);
             if (res->tag==V_INT) resize_env(env, size);
             // print_env(env);
             return res;
         }else if(fun->tag==V_FUNREC){
-            get_fun_args(e->content.bloc->next, fun->content.funrec->fun, env);
+            get_fun_args(e->content.es->next, fun->content.funrec->fun, env);
             // print_env(env);
             res = evalExpr(fun->content.funrec->fun->body, env);
             if (res->tag==V_INT) resize_env(env, size);
@@ -224,21 +234,21 @@ void evalDec(Dec dec, Env env){
     int argc; char **argstr;
     switch (dec->tag){
     case DEC_CONS:
-        res = evalExpr(dec->e, env);
+        res = evalExpr(dec->content._const.e, env);
         add_env(env, dec->id, res);
         break;
     case DEC_FUN:
-        args = dec->args;
+        args = dec->content._fun.args;
         argc = nb_args(args);
         argstr = get_args(args);
-        res = new_fun(argc, argstr, dec->e);
+        res = new_fun(argc, argstr, dec->content._fun.e);
         add_env(env, dec->id, res);
         break;
     case DEC_FUNREC:
-        args = dec->args;
+        args = dec->content._fun.args;
         argc = nb_args(args);
         argstr = get_args(args);
-        res = new_fun(argc, argstr, dec->e);
+        res = new_fun(argc, argstr, dec->content._fun.e);
         res = new_funrec(dec->id, res->content.fun);
         add_env(env, dec->id, res);
         break;
@@ -250,12 +260,12 @@ void evalDec(Dec dec, Env env){
 void evalCmd(Cmd cmd, Env env) {
     int size;
     switch (cmd->tag) {
-        case ASTStat: 
+        case CMD_STAT: 
             size = env->size;
-            printf("%d\n", get_num(evalExpr(cmd->content.stat.content, env))); 
+            printf("%d\n", get_num(evalExpr(cmd->content.stat->content.e, env))); 
             resize_env(env, size);
             break;
-        case ASTDec: evalDec(cmd->content.dec, env);
+        case CMD_DEC: evalDec(cmd->content.dec, env);
     }
 }
 

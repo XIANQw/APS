@@ -1,75 +1,23 @@
+#include <stdio.h>
 #include "ast.h"
-
+// Prog
 Prog newASTProg(Cmds cmds){
     Prog res = mallocProg;
     res->content =cmds;
     return res;
 }
 
-
-Expr newASTNum(int num){
-    Expr res = mallocExpr;
-    res->tag = ASTNum;
-    res->content.num = num;
-    return res;
-}
-
-Expr newASTId(char * id){
-    Expr res = mallocExpr;
-    res->tag = ASTId;
-    res->content.id = id;
-    return res;
-}
-
-Expr newASTBool(cbool val){
-    Expr res = mallocExpr;
-    res->tag = ASTBool;
-    res->content.bool.val = val;
-    return res;
-}
-
-Expr newASTPrim(Oprim op, Exprs es){
-    Expr res = mallocExpr;
-    res->tag = ASTPrim;
-    if(op < 4) res->content.prim.tag = ASTPrim;
-    else if(op < 7) res->content.prim.tag = ASTBprim;
-    else res->content.prim.tag = ASTRprim;
-    res->content.prim.op = op;
-    res->content.prim.opans = es;
-    return res;
-}
-
-Exprs appendExprs(Expr e, Exprs es){
-    Exprs res = mallocExprs;
-    res->head = e;
-    res->next = es;
-    return res;
-}
-
-Cmd newASTStat(Expr e){
+// Commande
+Cmd newASTCmd(Stat stat, Dec dec, TagCmd tag) {
     Cmd res = mallocCmd;
-    res->tag = ASTStat;
-    res->content.stat.content = e;
-    return res;
-}
-
-Cmd newASTCmdDec(Dec dec) {
-    Cmd res = mallocCmd;
-    res->tag = ASTDec;
-    res->content.dec = dec;
-    return res;
-}
-
-Dec newASTDec(char * id, Type t, Args args, Expr e, TagDec tag){
-    Dec res = mallocDec;
     res->tag = tag;
-    res->id = id;
-    res->type = t;
-    res->args = args;
-    res->e = e;
+    if(tag==CMD_DEC) res->content.dec = dec;
+    else if(tag==CMD_STAT) res->content.stat =stat;
+    else{
+        printf("Tag undifined\n"); exit(0);
+    }
     return res;
 }
-
 
 Cmds appendCmds(Cmd cmd, Cmds cmds) {
     Cmds res = mallocCmds;
@@ -78,6 +26,48 @@ Cmds appendCmds(Cmd cmd, Cmds cmds) {
     return res;
 }
 
+// Statement
+Stat newASTStatEcho(Expr e){
+    Stat res = mallocStat;
+    res->tag = STAT_ECHO;
+    res->content.e = e;
+    return res;
+}
+
+
+// Declaration
+Dec newASTDec(char * id, Type t, Args args, Expr e, TagDec tag){
+    Dec res=mallocDec;
+    res->id=id;
+    res->tag=tag;
+    if(tag==DEC_CONS){
+        res->content._const.type=t;
+        res->content._const.e=e;
+    }else if(tag==DEC_FUN||tag==DEC_FUNREC){
+        res->content._fun.args=args;
+        res->content._fun.type=t;
+        res->content._fun.e=e;
+    }
+    return res;
+}
+
+// Argument
+Arg newASTArg(char * id, Type type){
+    Arg res = mallocArg;
+    res->ident = id;
+    res->type = type;
+    return res;
+}
+
+Args appendArgs(Arg arg, Args args){
+    Args res = mallocArgs;
+    res->arg = arg;
+    res->next = args;
+    return res;
+}
+
+
+// Type
 Type newASTType1(Tprim t){
     Type res = mallocType;
     res->flag = 1;
@@ -100,17 +90,41 @@ Types appendTypes(Type t, Types ts){
     return res; 
 }
 
-Arg newASTArg(char * id, Type type){
-    Arg res = mallocArg;
-    res->ident = id;
-    res->type = type;
+
+// Expression
+Expr newASTNum(int num){
+    Expr res = mallocExpr;
+    res->tag = ASTNum;
+    res->content.num = num;
     return res;
 }
 
-Args appendArgs(Arg arg, Args args){
-    Args res = mallocArgs;
-    res->arg = arg;
-    res->next = args;
+Expr newASTId(char * id){
+    Expr res = mallocExpr;
+    res->tag = ASTId;
+    res->content.id = id;
+    return res;
+}
+
+Expr newASTBool(cbool val){
+    Expr res = mallocExpr;
+    res->tag = ASTBool;
+    res->content.cbool.val = val;
+    return res;
+}
+
+Expr newASTPrim(Oprim op, Exprs es){
+    Expr res = mallocExpr;
+    res->tag = ASTPrim;
+    res->content.prim.op = op;
+    res->content.prim.opans = es;
+    return res;
+}
+
+Exprs appendExprs(Expr e, Exprs es){
+    Exprs res = mallocExprs;
+    res->head = e;
+    res->next = es;
     return res;
 }
 
@@ -134,6 +148,9 @@ Expr newASTLambda(Args args, Expr e) {
 Expr newASTBloc(Exprs es){
     Expr res = mallocExpr;
     res->tag = ASTBloc;
-    res->content.bloc = es;
+    res->content.es = es;
     return res;
 }
+
+
+

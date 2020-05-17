@@ -34,6 +34,7 @@
     Dec dec;
     Cmds cmds;
     Cmd cmd;
+    Stat stat;
     Tprim tprim;
     Type type;
     Types types;
@@ -45,19 +46,19 @@
 }
 
 %type<prog> prog
-%type<cmd> stat
-%type<dec> dec
 %type<cmd> cmd
 %type<cmds> cmds
+%type<dec> dec
+%type<stat> stat
+%type<arg> arg;
+%type<args> args;
+%type<type> type;
+%type<types> types; 
 %type<expr> expr
 %type<exprs> exprs
 %type<bool> bool
 %type<tprim> tprim
-%type<type> type;
-%type<types> types; 
 %type<oprim> oprim;
-%type<arg> arg;
-%type<args> args;
 
 
 %start prog
@@ -68,8 +69,8 @@ LCO cmds RCO {theProg = newASTProg($2); }
 ;
 
 cmd:
-stat {$$ = $1;}
-| dec {$$ = newASTCmdDec($1); }
+stat {$$ = newASTCmd($1,NULL,CMD_STAT);}
+| dec {$$ = newASTCmd(NULL,$1,CMD_DEC); }
 ;
 
 cmds:
@@ -78,7 +79,7 @@ cmd {$$ = appendCmds($1, NULL); }
 ;
 
 stat:
-ECHO expr { $$ = newASTStat($2);}
+ECHO expr { $$ = newASTStatEcho($2);}
 ;
 
 dec:
@@ -157,5 +158,6 @@ int yyerror(char *s) {
 int main(int argc, char **argv) {
     yyparse();
     evalProg(theProg);
+    printf("\n");
     return 0;
 }

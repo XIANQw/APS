@@ -54,11 +54,11 @@ void printLambda(Expr e){
     printf(")");
 }
 
-void printBloc(Expr e) {
+void printEs(Expr e) {
     printf("appFunc(");
-    printExpr(e->content.bloc->head);
+    printExpr(e->content.es->head);
     printf(",[");
-    printExprs(e->content.bloc->next);
+    printExprs(e->content.es->next);
     printf("]");
     printf(")");
 }
@@ -67,11 +67,11 @@ void printExpr(Expr e){
     switch(e->tag) {
         case ASTNum : printNum(e->content.num); break;
         case ASTId : printId(e->content.id); break;
-        case ASTBool : printBool(e->content.bool.val); break;
+        case ASTBool : printBool(e->content.cbool.val); break;
         case ASTPrim : printPrim(e); break;
         case ASTIf: printIf(e); break;
         case ASTLambda: printLambda(e); break;
-        case ASTBloc: printBloc(e); break;
+        case ASTBloc: printEs(e); break;
     }
 }
 
@@ -115,35 +115,38 @@ void printTypes(Types ts){
     printType(ts->head);
 }
 
+void printStat(Stat stat){
+    switch (stat->tag){
+    case STAT_ECHO:
+        printf("echo(");
+        printExpr(stat->content.e); printf(")");
+        break;
+    default:
+        break;
+    }
+}
+
 void printDec(Dec dec){
     switch (dec->tag) {
         case DEC_CONS:
             printf("const(");
-            printId(dec->id);
-            printf(",");
-            printType(dec->type);
-            printf(",");
-            printExpr(dec->e);
-            printf(")");
+            printId(dec->id); printf(",");
+            printType(dec->content._const.type); printf(",");
+            printExpr(dec->content._const.e); printf(")");
             break;
         case DEC_FUN: 
             printf("fun("); 
             printId(dec->id);printf(",");
-            printType(dec->type);printf(",");
-            printArgs(dec->args);printf(",");
-            printExpr(dec->e);
-            printf(")");
+            printType(dec->content._fun.type);printf(",");
+            printArgs(dec->content._fun.args);printf(",");
+            printExpr(dec->content._fun.e); printf(")");
             break;
         case DEC_FUNREC : 
             printf("funRec("); 
-            printId(dec->id);
-            printf(",");
-            printType(dec->type);
-            printf(",");
-            printArgs(dec->args);
-            printf(",");
-            printExpr(dec->e);
-            printf(")");
+            printId(dec->id);printf(",");
+            printType(dec->content._fun.type);printf(",");
+            printArgs(dec->content._fun.args);printf(",");
+            printExpr(dec->content._fun.e); printf(")");
             break;
     }
 }
@@ -169,16 +172,14 @@ void printArgs(Args args){
     printf("]");
 }
 
+
 void printCmd(Cmd cmd) {
     switch(cmd->tag) {
-        case ASTStat : 
-        printf("echo(");
-        printExpr(cmd->content.stat.content); 
-        printf(")");
-        break;
-        case ASTDec : printDec(cmd->content.dec); break;
+        case CMD_STAT: printStat(cmd->content.stat); break;
+        case CMD_DEC : printDec(cmd->content.dec); break;
     }
 }
+
 
 void printCmds(Cmds cmds){
     if(!cmds) return ;
