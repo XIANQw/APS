@@ -2,6 +2,7 @@
     #include <stdio.h>
     #include <stdlib.h>
     #include "eval.h"
+    #include "prologTerm.h"
 
     int yylex (void);
     int yyerror (char *);
@@ -15,16 +16,18 @@
 %token  LPAR RPAR LCO RCO
 // symbol
 %token  NL COLON PV VRG STAR FLECH
-%token CONST FUN REC
+// dec
+%token CONST FUN REC PROC VAR
+// stat
 %token ECHO
-//type
-%token INT BOOL
+// type
+%token INT BOOL VOID
 // logic
 %token TRUE FALSE NOT AND OR
 // op
 %token  EQ LT GT PLUS MINUS MULT DIV
 
-%token IF
+%token IF SET WHILE CALL IF_PROC
 
 %union {
     int num;
@@ -34,6 +37,7 @@
     Dec dec;
     Cmds cmds;
     Cmd cmd;
+    Stat stat;
     Tprim tprim;
     Type type;
     Types types;
@@ -45,7 +49,8 @@
 }
 
 %type<prog> prog
-%type<cmd> stat
+%type<prog> block;
+%type<stat> stat
 %type<dec> dec
 %type<cmd> cmd
 %type<cmds> cmds
@@ -67,9 +72,13 @@ prog:
 LCO cmds RCO {theProg = newASTProg($2); }
 ;
 
+block:
+LCO cmds RCO {$$ = newASTProg($2);}
+;
+
 cmd:
-stat {$$ = $1;}
-| dec {$$ = newASTCmdDec($1); }
+stat {$$ = newASTCmd($1, NULL, CMD_STAT);}
+| dec {$$ = newASTCmd(NULL, $1, CMD_DEC); }
 ;
 
 cmds:
@@ -78,16 +87,27 @@ cmd {$$ = appendCmds($1, NULL); }
 ;
 
 stat:
-ECHO expr { $$ = newASTStat($2);}
+ECHO expr { $$ = newASTStatEcho($2);}
+|SET IDENT expr {$$ = newASTStatSet($2, $3);}
+|IF expr block block {$$ = newASTStatIf($2, $3, $4);}
+|WHILE expr block {$$ = newASTStatWhile($2, $3); }
+|CALL IDENT exprs {$$ = newASTStatCall($2, $3); }
 ;
 
+// newASTDec(char * id, Type t, Args args, Expr e, Prog prog, TagDec tag);
 dec:
 CONST IDENT type expr 
-{$$ = newASTDec($2, $3, NULL, $4, DEC_CONS); }
+{$$ = newASTDec($2, $3, NULL, $4, NULL, DEC_CONS); }
 |FUN IDENT type LCO args RCO expr 
-{$$ = newASTDec($2, $3, $5, $7, DEC_FUN);}
+{$$ = newASTDec($2, $3, $5, $7, NULL, DEC_FUN);}
 |FUN REC IDENT type LCO args RCO expr 
-{$$ = newASTDec($3, $4, $6, $8, DEC_FUNREC);}
+{$$ = newASTDec($3, $4, $6, $8, NULL, DEC_FUNREC);}
+|VAR IDENT type 
+{$$ = newASTDec($2, $3, NULL, NULL, NULL, DEC_VAR);}
+|PROC IDENT LCO args RCO block 
+{$$ = newASTDec($2, NULL, $4, NULL, $6, DEC_PROC);}
+|PROC REC IDENT LCO args RCO block
+{$$ = newASTDec($3, NULL, $5, NULL, $7, DEC_PROCREC);}
 ;
 
 bool:
@@ -98,6 +118,7 @@ TRUE {$$ = c_true; }
 tprim:
 INT {$$ = T_INT; }
 | BOOL {$$ = T_BOOL; }
+| VOID {$$ = T_VOID; }
 ;
 
 type:
@@ -134,7 +155,8 @@ PLUS {$$ = Add; }
 expr:
 NUM                       { $$ = newASTNum($1); }
 | bool                    { $$ = newASTBool($1); }
-| IDENT                     { $$ = newASTId($1); }
+| IDENT                   { $$ = newASTId($1); }
+| LPAR NOT expr RPAR      { $$ = newASTNot($3);}
 | LPAR oprim exprs RPAR   { $$ = newASTPrim($2,$3); }
 | LPAR IF expr expr expr RPAR {$$ = newASTIf($3, $4, $5);}
 | LCO args RCO expr {$$ = newASTLambda($2, $4);}
@@ -156,6 +178,9 @@ int yyerror(char *s) {
 
 int main(int argc, char **argv) {
     yyparse();
+    printProg(theProg);
+    printf("\n");
     evalProg(theProg);
+    printf("\n");
     return 0;
 }

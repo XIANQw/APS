@@ -30,6 +30,13 @@ Expr newASTBool(cbool val){
     return res;
 }
 
+Expr newASTNot(Expr e){
+    Expr res = mallocExpr;
+    res->tag = ASTNot;
+    res->content.not=e;
+    return res;
+}
+
 Expr newASTPrim(Oprim op, Exprs es){
     Expr res = mallocExpr;
     res->tag = ASTPrim;

@@ -1,3 +1,6 @@
+#ifndef AST_H
+#define AST_H
+
 #include <stdlib.h>
 typedef enum{
     CMD_DEC, CMD_STAT
@@ -9,7 +12,7 @@ typedef enum{
     STAT_ECHO, STAT_SET, STAT_IF, STAT_WHILE, STAT_CALL
 }TagStat;
 typedef enum{
-    ASTNum, ASTId, ASTBool, ASTPrim, 
+    ASTNum, ASTId, ASTBool, ASTNot, ASTPrim, 
     ASTBloc, ASTIf, ASTLambda
 }TagExpr;
 typedef enum{
@@ -133,6 +136,7 @@ struct _expr{
     union{
         int num;
         char *id;
+        Expr not;
         struct{
             cbool val;
         }cbool;
@@ -182,6 +186,7 @@ Args appendArgs(Arg arg, Args args);
 Expr newASTNum(int num);
 Expr newASTId(char * id);
 Expr newASTBool(cbool val);
+Expr newASTNot(Expr e);
 Expr newASTPrim(Oprim op, Exprs es);
 Expr newASTIf(Expr cond, Expr res, Expr alter);
 Expr newASTLambda(Args args, Expr e);
@@ -201,3 +206,5 @@ Exprs appendExprs(Expr e, Exprs es);
 #define mallocExpr (Expr)malloc(sizeof(struct _expr))
 
 
+
+#endif

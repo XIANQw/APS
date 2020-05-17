@@ -46,8 +46,15 @@ idents [a-zA-Z][a-zA-Z0-9]*
 "sub" return(MINUS);
 "mul" return(MULT);
 "div" return(DIV);
-
 "if" return(IF);
+
+"VAR" return(VAR);
+"PROC" return(PROC);
+"SET" return(SET);
+"WHILE" return(WHILE);
+"CALL" return(CALL);
+"IF" return(IF);
+"void" return(VOID);
 
 
 
