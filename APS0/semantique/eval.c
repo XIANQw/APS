@@ -11,22 +11,23 @@ Env new_env(){
 }
 
 Env copy_env(Env env){
-    Env copy = (Env)malloc(sizeof(struct  _env));
-    copy->cap=env->cap;
-    copy->size=env->size;
-    memcpy(copy->idents, env->idents, copy->size);
-    memcpy(copy->vals, env->vals, copy->size);
+    Env copy = (Env)malloc(sizeof(struct _env));
+    memcpy(copy, env, sizeof(struct _env));
     return copy;
 }
 
 void print_env(Env env){
-    printf("env={");
+    printf("<");
     for(int i=0; i<env->size; i++){
-        if(env->vals[i]->tag==V_INT) printf("(%s, %d)", env->idents[i], get_num(env->vals[i]));
-        else if(env->vals[i]->tag==V_FUN) printf("(%s, fun)", env->idents[i]);
-        else printf("(%s, funrec)", env->idents[i]);
+        if(env->vals[i]){
+            if(env->vals[i]->tag==V_INT) printf("(%s, %d)", env->idents[i], get_num(env->vals[i]));
+            else if(env->vals[i]->tag==V_FUN) printf("(%s, fun)", env->idents[i]);
+            else printf("(%s, funrec)", env->idents[i]);
+        }else{
+            printf("(%s, NULL)", env->idents[i]);
+        }
     }
-    printf("}\n");
+    printf(">\n");
 }
 
 
@@ -46,9 +47,9 @@ Value get_env(Env env, char *id){
     return NULL;
 }
 
-void resize_env(Env env, int size){
+void pop_env(Env env, int size){
     if(size < 0) return;
-    while(env->size > size){
+    for(int i=0; i<size; i++){
         env->idents[env->size] = NULL;
         free_value(env->vals[env->size]);
         env->vals[env->size--];
@@ -90,13 +91,14 @@ int get_num(Value v){
     return v->content.val;
 }
 
-Value new_fun(int argc, char**args, Expr body){
+Value new_fun(int argc, char**args, Expr body, Env env){
     Value value = (Value)malloc(sizeof(struct _value));
     value->tag=V_FUN;
     Fun fun = (Fun)malloc(sizeof(struct _fun));
     fun->argc=argc;
     fun->args=args;
     fun->body=body;
+    fun->env=env;
     value->content.fun=fun;
     return value;
 }
@@ -128,11 +130,16 @@ void print_args(char** args, int argc){
     printf("\n");
 }
 
-void get_fun_args(Exprs es, Fun fun, Env env){
-    Value val;
+void merge_funenv_env_args(Exprs es, Fun fun, Env env){
+    Value val, res;
+    for(int i=0; i<env->size; i++){
+        res = get_env(fun->env, env->idents[i]);
+        if(res) continue;
+        else add_env(fun->env, env->idents[i], env->vals[i]);
+    }
     for(int i=0; i<fun->argc; i++){
         val = evalExpr(es->head, env);
-        add_env(env, *(fun->args+i), val);
+        add_env(fun->env, *(fun->args+i), val);
     }
 }
 
@@ -182,6 +189,7 @@ Value evalExpr(Expr e, Env env) {
     Value res, cond, fun;
     int size, argc;
     char **args;
+    Env newenv=NULL;
     switch(e->tag) {
     case ASTNum : return new_num(e->content.num); 
     case ASTId : 
@@ -200,27 +208,24 @@ Value evalExpr(Expr e, Env env) {
         return evalExpr(e->content.If.alter, env);
     case ASTBloc:
         fun = evalExpr(e->content.es->head, env);
-        size = env->size;
         if(fun->tag==V_FUN){
-            get_fun_args(e->content.es->next, fun->content.fun, env);
-            // print_env(env);
-            res = evalExpr(fun->content.fun->body, env);
-            if (res->tag==V_INT) resize_env(env, size);
-            // print_env(env);
+            merge_funenv_env_args(e->content.es->next, fun->content.fun, env);
+            // print_env(fun->content.fun->env);
+            res = evalExpr(fun->content.fun->body, fun->content.fun->env);
             return res;
         }else if(fun->tag==V_FUNREC){
-            get_fun_args(e->content.es->next, fun->content.funrec->fun, env);
-            // print_env(env);
-            res = evalExpr(fun->content.funrec->fun->body, env);
-            if (res->tag==V_INT) resize_env(env, size);
-            // print_env(env);
+            merge_funenv_env_args(e->content.es->next, fun->content.funrec->fun, env);
+            // print_env(fun->content.funrec->fun->env);
+            res = evalExpr(fun->content.funrec->fun->body, fun->content.funrec->fun->env);
+            pop_env(fun->content.funrec->fun->env, fun->content.funrec->fun->argc);
+            // print_env(fun->content.funrec->fun->env);
             return res;
         }
         break;
     case ASTLambda:
         argc = nb_args(e->content.lambda.args);
         args = get_args(e->content.lambda.args);
-        res = new_fun(argc, args, e->content.lambda.e);
+        res = new_fun(argc, args, e->content.lambda.e, env);
         return res;
     default:
         // return 0;
@@ -241,14 +246,14 @@ void evalDec(Dec dec, Env env){
         args = dec->content._fun.args;
         argc = nb_args(args);
         argstr = get_args(args);
-        res = new_fun(argc, argstr, dec->content._fun.e);
+        res = new_fun(argc, argstr, dec->content._fun.e, copy_env(env));
         add_env(env, dec->id, res);
         break;
     case DEC_FUNREC:
         args = dec->content._fun.args;
         argc = nb_args(args);
         argstr = get_args(args);
-        res = new_fun(argc, argstr, dec->content._fun.e);
+        res = new_fun(argc, argstr, dec->content._fun.e, copy_env(env));
         res = new_funrec(dec->id, res->content.fun);
         add_env(env, dec->id, res);
         break;
@@ -260,10 +265,8 @@ void evalDec(Dec dec, Env env){
 void evalCmd(Cmd cmd, Env env) {
     int size;
     switch (cmd->tag) {
-        case CMD_STAT: 
-            size = env->size;
+        case CMD_STAT:
             printf("%d\n", get_num(evalExpr(cmd->content.stat->content.e, env))); 
-            resize_env(env, size);
             break;
         case CMD_DEC: evalDec(cmd->content.dec, env);
     }
