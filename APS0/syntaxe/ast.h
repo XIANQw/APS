@@ -10,7 +10,7 @@ typedef enum{
 }TagStat;
 typedef enum{
     ASTNum, ASTId, ASTBool, ASTPrim, 
-    ASTBloc, ASTIf, ASTLambda
+    ASTAppfun, ASTIf, ASTLambda
 }TagExpr;
 typedef enum{
     Add, Sub, Mul, Div, Eq, Lt, Gt, Or, And, Not
@@ -34,9 +34,60 @@ typedef struct _types * Types;
 typedef struct _arg * Arg;
 typedef struct _args * Args;
 
+struct _expr{
+    TagExpr tag;
+    union{
+        int num;
+        char *id;
+        struct{
+            cbool val;
+        }cbool;
+        struct{
+            Oprim op;
+            Exprs opans;
+        }prim;
+        struct{
+            Expr condition;
+            Expr prog;
+            Expr alter;  
+        }If;
+        struct{
+            Args args;
+            Expr e;
+        }lambda;
+        Exprs es;
+    }content;
+};
 
-struct _prog{
-    Cmds content;
+struct _exprs{
+    Expr head;
+    Exprs next;
+};
+
+struct _type{
+    int flag;
+    union{
+        Tprim t;
+        struct{
+            Types types;
+            Type type;
+        }t_func;
+    }content;
+};
+
+struct _types{
+    Type head;
+    Types next;
+};
+
+struct _arg {
+    char * ident;
+    Type type;
+};
+
+struct _args {
+    Arg arg;
+    Args next;
 };
 
 struct _dec{
@@ -76,78 +127,12 @@ struct _cmds{
     Cmds next;
 };
 
-struct _type{
-    int flag;
-    union{
-        Tprim t;
-        struct{
-            Types types;
-            Type type;
-        }t_func;
-    }content;
+struct _prog{
+    Cmds content;
 };
 
-struct _types{
-    Type head;
-    Types next;
-};
 
-struct _arg {
-    char * ident;
-    Type type;
-};
 
-struct _args {
-    Arg arg;
-    Args next;
-};
-
-struct _expr{
-    TagExpr tag;
-    union{
-        int num;
-        char *id;
-        struct{
-            cbool val;
-        }cbool;
-        struct{
-            Oprim op;
-            Exprs opans;
-        }prim;
-        struct{
-            Expr condition;
-            Expr prog;
-            Expr alter;  
-        }If;
-        struct{
-            Args args;
-            Expr e;
-        }lambda;
-        Exprs es;
-    }content;
-};
-
-struct _exprs{
-    Expr head;
-    Exprs next;
-};
-
-// Prog
-Prog newASTProg(Cmds cmds);
-// Cmds
-Cmds appendCmds(Cmd cmd, Cmds cmds);
-Cmd newASTCmd(Stat stat, Dec dec, TagCmd tag);
-// Stat
-Stat newASTStatEcho(Expr e);
-// Dec
-Dec newASTDec(char * id, Type t, Args args, Expr e, TagDec tag);
-// Types
-Type newASTType1(Tprim t);
-Type newASTType2(Types types, Type type);
-Types appendTypes(Type type, Types tpyes);
-// Args
-Arg newASTArg(char * id, Type type);
-Args appendArgs(Arg arg, Args args);
 // Expr
 Expr newASTNum(int num);
 Expr newASTId(char * id);
@@ -157,17 +142,35 @@ Expr newASTIf(Expr cond, Expr res, Expr alter);
 Expr newASTLambda(Args args, Expr e);
 Expr newASTBloc(Exprs es);
 Exprs appendExprs(Expr e, Exprs es);
+// Types
+Type newASTType1(Tprim t);
+Type newASTType2(Types types, Type type);
+Types appendTypes(Type type, Types tpyes);
+// Args
+Arg newASTArg(char * id, Type type);
+Args appendArgs(Arg arg, Args args);
+// Stat
+Stat newASTStatEcho(Expr e);
+// Dec
+Dec newASTDec(char * id, Type t, Args args, Expr e, TagDec tag);
+// Cmds
+Cmds appendCmds(Cmd cmd, Cmds cmds);
+Cmd newASTCmd(Stat stat, Dec dec, TagCmd tag);
+// Prog
+Prog newASTProg(Cmds cmds);
 
-#define mallocProg (Prog)malloc(sizeof(struct _prog))
-#define mallocCmds (Cmds)malloc(sizeof(struct _cmds))
-#define mallocCmd (Cmd)malloc(sizeof(struct _cmd))
+
+#define mallocExpr (Expr)malloc(sizeof(struct _expr))
+#define mallocExprs (Exprs)malloc(sizeof(struct _exprs))
+#define mallocType (Type)malloc(sizeof(struct _type))
+#define mallocTypes (Types)malloc(sizeof(struct _types))
+#define mallocArg (Arg)malloc(sizeof(struct _arg))
+#define mallocArgs (Args)malloc(sizeof(struct _args))
 #define mallocStat (Stat)malloc(sizeof(struct _stat))
 #define mallocDec (Dec)malloc(sizeof(struct _dec))
-#define mallocTypes (Types)malloc(sizeof(struct _types))
-#define mallocType (Type)malloc(sizeof(struct _type))
-#define mallocArgs (Args)malloc(sizeof(struct _args))
-#define mallocArg (Arg)malloc(sizeof(struct _arg))
-#define mallocExprs (Exprs)malloc(sizeof(struct _exprs))
-#define mallocExpr (Expr)malloc(sizeof(struct _expr))
+#define mallocCmd (Cmd)malloc(sizeof(struct _cmd))
+#define mallocCmds (Cmds)malloc(sizeof(struct _cmds))
+#define mallocProg (Prog)malloc(sizeof(struct _prog))
+
 
 

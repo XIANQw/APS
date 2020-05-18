@@ -214,11 +214,13 @@ Value evalExpr(Expr e, Env env) {
         cond=evalExpr(e->content.If.condition, env);
         if(get_num(cond)) return evalExpr(e->content.If.prog, env);
         return evalExpr(e->content.If.alter, env);
-    case ASTBloc:
+    case ASTAppfun:
         res = evalExpr(e->content.es->head, env);
         if(res->tag==V_FUN){
+            fun=res->content.fun;
             return app_fun(e->content.es->next, fun, env);
         }else if(res->tag==V_FUNREC){
+            fun=res->content.funrec->fun;
             return app_fun(e->content.es->next, fun, env);
         }
         break;

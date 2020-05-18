@@ -10,7 +10,7 @@ typedef enum{
 }TagStat;
 typedef enum{
     ASTNum, ASTId, ASTBool, ASTPrim, 
-    ASTBloc, ASTIf, ASTLambda
+    ASTAppfun, ASTIf, ASTLambda
 }TagExpr;
 typedef enum{
     Add, Sub, Mul, Div, Eq, Lt, Gt, Or, And, Not

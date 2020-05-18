@@ -5,11 +5,12 @@ assoc(K,[_|L],V):-assoc(K,L,V).
 append([],L,L).
 append([X|Y],L,[X|L2]):-append(Y,L,L2).
 
-exprs(_,[],[]).
-exprs(G,[Expr|ExprList],[Type|TypeList]):-expr(G,Expr,Type),exprs(G,ExprList,TypeList).
-
 getTypes([(_,Type)],[Type]).
 getTypes([(_,Type)|ARGS],[Type|TypeList]):-getTypes(ARGS,TypeList).
+
+% expressions
+exprs(_,[],[]).
+exprs(G,[Expr|ExprList],[Type|TypeList]):-expr(G,Expr,Type),exprs(G,ExprList,TypeList).
 
 % bool
 expr(_,true,bool).
@@ -39,8 +40,6 @@ expr(G,appFunc(F,ExprList),Type):-expr(G,F,func(TypeList,Type)),exprs(G,ExprList
 % ABS
 expr(G,lambda(ARGS,E),func(TS,Type)):-getTypes(ARGS,TS),append(G,ARGS,GG),expr(GG,E,Type).
 
-% echo
-stat(G,echo(Expr),void):-expr(G,Expr,int).
 
 % Déclaration
 % const
@@ -52,6 +51,9 @@ dec(G,fun(Id,Type,ARGS,Expr),[(Id,func(TS,Type))|G]):-append(G,ARGS,GG),expr(GG,
 % fonction récursive
 dec(G,funRec(Id,Type,ARGS,Expr),[(Id,func(TS,Type))|G]):-append(G,ARGS,G2),append(G2,[(Id,func(TS,Type))],GG),expr(GG,Expr,Type),getTypes(ARGS,TS).
 
+% Statement
+% echo
+stat(G,echo(Expr),void):-expr(G,Expr,int).
 
 % Suites de commandes
 % commence par une déclaration

@@ -147,7 +147,7 @@ Expr newASTLambda(Args args, Expr e) {
 
 Expr newASTBloc(Exprs es){
     Expr res = mallocExpr;
-    res->tag = ASTBloc;
+    res->tag = ASTAppfun;
     res->content.es = es;
     return res;
 }

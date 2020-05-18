@@ -5,6 +5,7 @@
 #define BUFSIZE 24
 char str[BUFSIZE];
 
+/* ------------------------ Value ------------------------ */
 char* str_of_value(Value value){
     if (!value) return "NULL";
     switch (value->tag)
@@ -33,7 +34,30 @@ char* str_of_value(Value value){
     return NULL;
 }
 
+void free_value(Value v){
+    if (v==NULL) return;
+    switch (v->tag){
+    case V_INT:
+        free(v);
+        break;
+    case V_FUN:
+        free(v->content.fun->args);
+        free(v->content.fun->body);
+        free(v->content.fun);
+        free(v);
+        break;
+    case V_FUNREC:
+        free(v->content.funrec->fun->args);
+        free(v->content.funrec->fun->body);
+        free(v->content.funrec->fun);
+        free(v);
+        break;
+    default:
+        break;
+    }
+}
 
+/* ------------------------ environement ------------------------ */
 Env new_env(){
     Env env = (Env)malloc(sizeof(struct _env));
     env->cap=ENVSIZE;
@@ -81,29 +105,7 @@ void pop_env(Env env, int size){
     }
 }
 
-void free_value(Value v){
-    if (v==NULL) return;
-    switch (v->tag){
-    case V_INT:
-        free(v);
-        break;
-    case V_FUN:
-        free(v->content.fun->args);
-        free(v->content.fun->body);
-        free(v->content.fun);
-        free(v);
-        break;
-    case V_FUNREC:
-        free(v->content.funrec->fun->args);
-        free(v->content.funrec->fun->body);
-        free(v->content.funrec->fun);
-        free(v);
-        break;
-    default:
-        break;
-    }
-}
-
+/* ------------------------ inN ------------------------ */
 Value new_num(int v){
     Value value = (Value)malloc(sizeof(struct _value));
     value->tag=V_INT;
@@ -116,21 +118,7 @@ int get_num(Value v){
     return v->content.val;
 }
 
-Value new_fun(int argc, char**args, Expr body){
-    Value value = (Value)malloc(sizeof(struct _value));
-    value->tag=V_FUN;
-    Fun fun = (Fun)malloc(sizeof(struct _fun));
-    fun->argc=argc;
-    fun->args=args;
-    fun->body=body;
-    fun->env=new_env();
-    for(int i=0; i<argc; i++){
-        add_env(fun->env, args[i], NULL);
-    }
-    value->content.fun=fun;
-    return value;
-}
-
+/* ------------------------ arguments ------------------------ */
 int nb_args(Args args){
     int res = 0;
     while(args){
@@ -159,19 +147,19 @@ void print_args(char** args, int argc){
     printf("\n");
 }
 
-void merge_funenv_env_args(Exprs es, Fun fun, Env env){
-    Value val, res;
-    for(int i=0; i<env->size; i++){
-        res = get_env(fun->env, env->idents[i]);
-        if(res) continue;
-        else add_env(fun->env, env->idents[i], env->vals[i]);
-    }
-    for(int i=0; i<fun->argc; i++){
-        val = evalExpr(es->head, env);
-        add_env(fun->env, *(fun->args+i), val);
-        es=es->next;
-    }
+/* ------------------------ inF + inFr ------------------------ */
+Value new_fun(int argc, char**args, Expr body){
+    Value value = (Value)malloc(sizeof(struct _value));
+    value->tag=V_FUN;
+    Fun fun = (Fun)malloc(sizeof(struct _fun));
+    fun->argc=argc;
+    fun->args=args;
+    fun->body=body;
+    fun->env=new_env();
+    value->content.fun=fun;
+    return value;
 }
+
 
 Fun get_fun(Value v){
     if(v->tag!=V_FUN) exit(0);
@@ -192,7 +180,24 @@ Funrec get_funrec(Value v){
     return v->content.funrec;
 }
 
-// proc
+Value app_fun(Exprs es, Fun fun, Env env){
+    Value val;
+    for(int i=0; i<env->size; i++){
+        val = get_env(fun->env, env->idents[i]);
+        if(val) continue;
+        else add_env(fun->env, env->idents[i], env->vals[i]);
+    }
+    for(int i=0; i<fun->argc; i++){
+        val = evalExpr(es->head, env);
+        es=es->next;
+        add_env(fun->env, *(fun->args+i), val);
+    }
+    Value res=evalExpr(fun->body, fun->env);
+    if(res->tag==V_INT) pop_env(fun->env, fun->argc);
+    return res;
+}
+
+/* ------------------------ intP + inPr ------------------------ */
 Value new_proc(int argc, char**args, Cmds body){
     Value value = (Value)malloc(sizeof(struct _value));
     value->tag=V_PROC;
@@ -201,9 +206,6 @@ Value new_proc(int argc, char**args, Cmds body){
     value->content.proc->args=args;
     value->content.proc->block=body;
     value->content.proc->env=new_env();
-    for(int i=0; i<argc; i++){
-        add_env(value->content.proc->env, args[i], NULL);
-    }
     return value;
 }
 Value new_procrec(char *id, Proc proc){
@@ -243,7 +245,7 @@ void app_proc(Value vproc, Exprs es, Env env){
     free(newenv);
 }
 
-// memoire
+/* ------------------------ inA ----------------------- */
 void init_mem(){
     memset(memoire.vals, DEFALUT, sizeof(memoire.vals));
     memoire.ptr=0;
@@ -281,6 +283,7 @@ int get_mem(Value vaddr){
     return memoire.vals[addr];
 }
 
+/* ------------------ evalutation ------------------------ */
 
 Value evalBinOp(Oprim op, Exprs es, Env env) {
     Value v1 = evalExpr(es->head, env);
@@ -306,7 +309,8 @@ Value evalBinOp(Oprim op, Exprs es, Env env) {
 
 
 Value evalExpr(Expr e, Env env) {
-    Value res, cond, fun;
+    Value res, cond; 
+    Fun fun;
     int size, argc;
     char **args;
     Env newenv=NULL;
@@ -333,27 +337,20 @@ Value evalExpr(Expr e, Env env) {
         cond=evalExpr(e->content.If.condition, env);
         if(get_num(cond)) return evalExpr(e->content.If.prog, env);
         return evalExpr(e->content.If.alter, env);
-    case ASTBloc:
-        fun = evalExpr(e->content.es->head, env);
-        if(fun->tag==V_FUN){
-            merge_funenv_env_args(e->content.es->next, fun->content.fun, env);
-            // print_env(fun->content.fun->env);
-            res = evalExpr(fun->content.fun->body, fun->content.fun->env);
-            return res;
-        }else if(fun->tag==V_FUNREC){
-            merge_funenv_env_args(e->content.es->next, fun->content.funrec->fun, env);
-            // print_env(fun->content.funrec->fun->env);
-            res = evalExpr(fun->content.funrec->fun->body, fun->content.funrec->fun->env);
-            pop_env(fun->content.funrec->fun->env, fun->content.funrec->fun->argc);
-            // print_env(fun->content.funrec->fun->env);
-            return res;
+    case ASTAppfun:
+        res = evalExpr(e->content.es->head, env);
+        if(res->tag==V_FUN){
+            fun=res->content.fun;
+            return app_fun(e->content.es->next, fun, env);
+        }else if(res->tag==V_FUNREC){
+            fun=res->content.funrec->fun;
+            return app_fun(e->content.es->next, fun, env);
         }
         break;
     case ASTLambda:
         argc = nb_args(e->content.lambda.args);
         args = get_args(e->content.lambda.args);
         res = new_fun(argc, args, e->content.lambda.e);
-        free(res->content.fun->env);
         res->content.fun->env=copy_env(env);
         return res;
     default:
@@ -435,7 +432,6 @@ void evalStat(Stat stat, Env env){
         break;
     case STAT_CALL:
         res=get_env(env, stat->content._call.id);
-        printf("call %s\n", stat->content._call.id);
         app_proc(res, stat->content._call.es, env);
         break;
     default:
@@ -466,7 +462,6 @@ void evalProg(Prog p) {
     Env env = new_env();
     init_mem();
     evalCmds(p->content, env);
-    // print_env(env);
 }
 
 

@@ -71,7 +71,7 @@ void printExpr(Expr e){
         case ASTPrim : printPrim(e); break;
         case ASTIf: printIf(e); break;
         case ASTLambda: printLambda(e); break;
-        case ASTBloc: printEs(e); break;
+        case ASTAppfun: printEs(e); break;
     }
 }
 
@@ -115,6 +115,27 @@ void printTypes(Types ts){
     printType(ts->head);
 }
 
+void printArg(Arg arg) {
+    if(!arg) return;
+    printf("(");
+    printId(arg->ident);
+    printf(",");
+    printType(arg->type);
+    printf(")");
+}
+
+void printArgs(Args args){
+    if(!args) return ;
+    printf("[");
+    while(args->next){
+        printArg(args->arg);
+        printf(",");
+        args = args->next;
+    }
+    printArg(args->arg);
+    printf("]");
+}
+
 void printStat(Stat stat){
     switch (stat->tag){
     case STAT_ECHO:
@@ -149,27 +170,6 @@ void printDec(Dec dec){
             printExpr(dec->content._fun.e); printf(")");
             break;
     }
-}
-
-void printArg(Arg arg) {
-    if(!arg) return;
-    printf("(");
-    printId(arg->ident);
-    printf(",");
-    printType(arg->type);
-    printf(")");
-}
-
-void printArgs(Args args){
-    if(!args) return ;
-    printf("[");
-    while(args->next){
-        printArg(args->arg);
-        printf(",");
-        args = args->next;
-    }
-    printArg(args->arg);
-    printf("]");
 }
 
 

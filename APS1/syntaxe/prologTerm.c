@@ -72,7 +72,7 @@ void printExpr(Expr e){
         case ASTPrim : printPrim(e); break;
         case ASTIf: printIf(e); break;
         case ASTLambda: printLambda(e); break;
-        case ASTBloc: printEs(e); break;
+        case ASTAppfun: printEs(e); break;
     }
 }
 
