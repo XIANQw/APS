@@ -2,6 +2,37 @@
 #include <string.h>
 #include "eval.h"
 
+#define BUFSIZE 24
+char str[BUFSIZE];
+
+char* str_of_value(Value value){
+    if (!value) return "NULL";
+    switch (value->tag)
+    {
+    case V_VOID:
+        return "Void";
+    case V_INT:
+        snprintf(str, BUFSIZE, "inN(%d)",get_num(value));
+        return str;
+    case V_FUN:
+        return "inF";
+    case V_FUNREC:
+        snprintf(str, BUFSIZE, "inFr(%s)", value->content.funrec->id);
+        return str;
+    case V_PROC:
+        return "inP";
+    case V_PROCREC:
+        snprintf(str, BUFSIZE, "inPr(%s)", value->content.procrec->id);
+        return str;
+    case V_ADDR:
+        snprintf(str, BUFSIZE, "inA(%d)", value->content.addr);
+        return str;
+    default:
+        break;
+    }
+    return NULL;
+}
+
 
 Env new_env(){
     Env env = (Env)malloc(sizeof(struct _env));
@@ -19,13 +50,7 @@ Env copy_env(Env env){
 void print_env(Env env){
     printf("<");
     for(int i=0; i<env->size; i++){
-        if(env->vals[i]){
-            if(env->vals[i]->tag==V_INT) printf("(%s, %d)", env->idents[i], get_num(env->vals[i]));
-            else if(env->vals[i]->tag==V_FUN) printf("(%s, fun)", env->idents[i]);
-            else printf("(%s, funrec)", env->idents[i]);
-        }else{
-            printf("(%s, NULL)", env->idents[i]);
-        }
+        printf("(%s, %s)", env->idents[i], str_of_value(env->vals[i]));
     }
     printf(">\n");
 }
@@ -121,6 +146,7 @@ char ** get_args(Args args){
     char **tail = res;
     for(int i=0; i<nb; i++){
         *(tail+i) = args->arg->ident;
+        args=args->next;
     }
     return res;
 }
@@ -143,6 +169,7 @@ void merge_funenv_env_args(Exprs es, Fun fun, Env env){
     for(int i=0; i<fun->argc; i++){
         val = evalExpr(es->head, env);
         add_env(fun->env, *(fun->args+i), val);
+        es=es->next;
     }
 }
 
@@ -195,6 +222,27 @@ Procrec get_procrec(Value v){
     if(v->tag!=V_PROCREC) exit(3);
     return v->content.procrec;
 }
+void app_proc(Value vproc, Exprs es, Env env){
+    Env newenv= copy_env(env);
+    Proc proc;
+    if(!vproc){
+        printf("vproc is NULL\n"); exit(-1); 
+    }
+    if(vproc->tag==V_PROC) proc=vproc->content.proc;
+    else if(vproc->tag==V_PROCREC) proc=vproc->content.procrec->proc;
+    else {
+        printf("vproc is not proc\n"); exit(-1); 
+    }
+    for(int i=0; i<proc->argc; i++){
+        Value val = evalExpr(es->head, env);
+        add_env(newenv, *(proc->args+i), val);
+        es=es->next;
+    }
+    // print_env(newenv);
+    evalCmds(proc->block, newenv);
+    free(newenv);
+}
+
 // memoire
 void init_mem(){
     memset(memoire.vals, DEFALUT, sizeof(memoire.vals));
@@ -309,7 +357,6 @@ Value evalExpr(Expr e, Env env) {
         res->content.fun->env=copy_env(env);
         return res;
     default:
-        // return 0;
         break;
     }
     return new_num(-1);
@@ -387,8 +434,9 @@ void evalStat(Stat stat, Env env){
         }
         break;
     case STAT_CALL:
-        // res=get_env(env, stat->content._call.id);
-        printf("call %s", stat->content._call.id);
+        res=get_env(env, stat->content._call.id);
+        printf("call %s\n", stat->content._call.id);
+        app_proc(res, stat->content._call.es, env);
         break;
     default:
         break;
