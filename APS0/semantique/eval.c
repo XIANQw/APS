@@ -98,7 +98,7 @@ Value new_fun(int argc, char**args, Expr body, Env env){
     fun->argc=argc;
     fun->args=args;
     fun->body=body;
-    fun->env=env;
+    fun->env=copy_env(env);
     value->content.fun=fun;
     return value;
 }
@@ -118,6 +118,7 @@ char ** get_args(Args args){
     char **tail = res;
     for(int i=0; i<nb; i++){
         *(tail+i) = args->arg->ident;
+        args=args->next;
     }
     return res;
 }
@@ -130,18 +131,23 @@ void print_args(char** args, int argc){
     printf("\n");
 }
 
-void merge_funenv_env_args(Exprs es, Fun fun, Env env){
-    Value val, res;
+Value app_fun(Exprs es, Fun fun, Env env){
+    Value val;
     for(int i=0; i<env->size; i++){
-        res = get_env(fun->env, env->idents[i]);
-        if(res) continue;
+        val = get_env(fun->env, env->idents[i]);
+        if(val) continue;
         else add_env(fun->env, env->idents[i], env->vals[i]);
     }
     for(int i=0; i<fun->argc; i++){
         val = evalExpr(es->head, env);
+        es=es->next;
         add_env(fun->env, *(fun->args+i), val);
     }
+    Value res=evalExpr(fun->body, fun->env);
+    if(res->tag==V_INT) pop_env(fun->env, fun->argc);
+    return res;
 }
+
 
 Fun get_fun(Value v){
     if(v->tag!=V_FUN) exit(0);
@@ -186,7 +192,8 @@ Value evalBinOp(Oprim op, Exprs es, Env env) {
 
 
 Value evalExpr(Expr e, Env env) {
-    Value res, cond, fun;
+    Value res, cond; 
+    Fun fun;
     int size, argc;
     char **args;
     Env newenv=NULL;
@@ -201,25 +208,18 @@ Value evalExpr(Expr e, Env env) {
     case ASTBool:
         if(e->content.cbool.val==c_true) return new_num(1);
         return new_num(0);
-    case ASTPrim : return evalBinOp(e->content.prim.op, e->content.prim.opans, env);
+    case ASTPrim: 
+        return evalBinOp(e->content.prim.op, e->content.prim.opans, env);
     case ASTIf:
         cond=evalExpr(e->content.If.condition, env);
         if(get_num(cond)) return evalExpr(e->content.If.prog, env);
         return evalExpr(e->content.If.alter, env);
     case ASTBloc:
-        fun = evalExpr(e->content.es->head, env);
-        if(fun->tag==V_FUN){
-            merge_funenv_env_args(e->content.es->next, fun->content.fun, env);
-            // print_env(fun->content.fun->env);
-            res = evalExpr(fun->content.fun->body, fun->content.fun->env);
-            return res;
-        }else if(fun->tag==V_FUNREC){
-            merge_funenv_env_args(e->content.es->next, fun->content.funrec->fun, env);
-            // print_env(fun->content.funrec->fun->env);
-            res = evalExpr(fun->content.funrec->fun->body, fun->content.funrec->fun->env);
-            pop_env(fun->content.funrec->fun->env, fun->content.funrec->fun->argc);
-            // print_env(fun->content.funrec->fun->env);
-            return res;
+        res = evalExpr(e->content.es->head, env);
+        if(res->tag==V_FUN){
+            return app_fun(e->content.es->next, fun, env);
+        }else if(res->tag==V_FUNREC){
+            return app_fun(e->content.es->next, fun, env);
         }
         break;
     case ASTLambda:
@@ -228,7 +228,6 @@ Value evalExpr(Expr e, Env env) {
         res = new_fun(argc, args, e->content.lambda.e, env);
         return res;
     default:
-        // return 0;
         break;
     }
     return new_num(-1);
@@ -246,14 +245,14 @@ void evalDec(Dec dec, Env env){
         args = dec->content._fun.args;
         argc = nb_args(args);
         argstr = get_args(args);
-        res = new_fun(argc, argstr, dec->content._fun.e, copy_env(env));
+        res = new_fun(argc, argstr, dec->content._fun.e, env);
         add_env(env, dec->id, res);
         break;
     case DEC_FUNREC:
         args = dec->content._fun.args;
         argc = nb_args(args);
         argstr = get_args(args);
-        res = new_fun(argc, argstr, dec->content._fun.e, copy_env(env));
+        res = new_fun(argc, argstr, dec->content._fun.e, env);
         res = new_funrec(dec->id, res->content.fun);
         add_env(env, dec->id, res);
         break;
