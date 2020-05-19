@@ -27,7 +27,7 @@
 // op
 %token  EQ LT GT PLUS MINUS MULT DIV
 
-%token IF SET WHILE CALL IF_PROC
+%token IF SET WHILE CALL IF_STAT
 
 %union {
     int num;
@@ -89,7 +89,7 @@ cmd {$$ = appendCmds($1, NULL); }
 stat:
 ECHO expr { $$ = newASTStatEcho($2);}
 |SET IDENT expr {$$ = newASTStatSet($2, $3);}
-|IF expr block block {$$ = newASTStatIf($2, $3, $4);}
+|IF_STAT expr block block {$$ = newASTStatIf($2, $3, $4);}
 |WHILE expr block {$$ = newASTStatWhile($2, $3); }
 |CALL IDENT exprs {$$ = newASTStatCall($2, $3); }
 ;

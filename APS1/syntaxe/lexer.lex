@@ -53,7 +53,7 @@ idents [a-zA-Z][a-zA-Z0-9]*
 "SET" return(SET);
 "WHILE" return(WHILE);
 "CALL" return(CALL);
-"IF" return(IF);
+"IF" return(IF_STAT);
 "void" return(VOID);
 
 
